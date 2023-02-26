@@ -14,7 +14,7 @@ from utilities import (
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog = 'PDF Tool',
-        description = 'Download PDF files present in URL and convert them to TXT files.',
+        description = 'Download PDF files present in URL and convert them to TXT files',
         epilog = '© Publico')
 
     parser.add_argument('url', nargs='?', help='The URL from which to download the PDF files')
