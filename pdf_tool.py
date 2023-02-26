@@ -17,12 +17,12 @@ if __name__ == '__main__':
         description = 'Download PDF files present in URL and convert them to TXT files',
         epilog = '© Publico')
 
-    parser.add_argument('url', nargs='?', help='The URL from which to download the PDF files')
+    parser.add_argument('url', nargs='?', help='the URL from which to download the PDF files')
     parser.add_argument('-i', '--interactive', action='store_true')
     parser.add_argument('-d', '--dir', action='store', default='',
-                        help='The directory where the new files should be stored (default: current directory)')
+                        help='the directory where the new files should be stored (default: current directory)')
     parser.add_argument('-rm', '--delete', action='store_true',
-                        help='Whether to delete all existing PDF & TXT files in the given directory')
+                        help='whether to delete all existing PDF & TXT files in the given directory')
     parser.add_argument('-v', '--verbose', action='store_true')
 
     args = parser.parse_args()
