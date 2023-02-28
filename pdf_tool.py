@@ -60,6 +60,7 @@ if __name__ == '__main__':
 
     if should_delete:
         delete_all_pdf_or_txt_files_in_dir(dir)
-        
-    download_all_pdfs_from_url(url, dir)
-    convert_all_pdfs_to_txt_in_dir(dir)
+
+    if url:
+        download_all_pdfs_from_url(url, dir)
+        convert_all_pdfs_to_txt_in_dir(dir)
