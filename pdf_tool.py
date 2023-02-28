@@ -30,8 +30,12 @@ if __name__ == '__main__':
     if args.interactive:
         print('\nLet me ask you a few questions and I promise I will make you happy! (◕ ‿ ◕)')
     elif not args.url:
-        print('\nYou must specify the first argument with either the -i flag to enter interactive mode or with a URL!\n(° ͜ʖ͡°)╭∩╮\n')
-        sys.exit(2)
+        if args.delete:
+            delete_all_pdf_or_txt_files_in_dir(args.dir)
+            sys.exit(0)
+        else:
+            print('\nYou must specify the first argument with either the -i flag to enter interactive mode or with a URL!\n(° ͜ʖ͡°)╭∩╮\n')
+            sys.exit(2)
     
     # Example of URL -> 'https://www.nps.gov/articles/000/historic-preservation-fund-sample-grant-applications.htm'
     url = (

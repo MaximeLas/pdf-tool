@@ -2,6 +2,8 @@ import os
 import re
 from urllib.parse import unquote
 
+import logger
+
 
 def get_files_in_dir(dir: str = None) -> list[str]:
     return os.listdir(dir or None)
@@ -20,4 +22,8 @@ def get_file_name_from_path_or_url(url: str) -> str:
     return url if '/' not in url else unquote(url.rsplit('/',1)[1])
 
 def get_base_url_from_url(url: str) -> str:
-    return re.match('.*www[^/]*', url).group()
+    try:
+        return re.match('.*://[^/]*', url).group()
+    except Exception as e:
+        logger.warning(f'❗ Caught exception {e=} when trying to get base url of {url}\n')
+        return ''
