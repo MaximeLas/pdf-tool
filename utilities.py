@@ -101,28 +101,34 @@ def download_all_pdfs_from_url(url: str, dst_dir: str) -> None:
     # Get all pdf links
     pdf_links = [link for link in links if '.pdf' in link.get('href', [])]
 
+    success_count = 0
+
     for count, link in enumerate(pdf_links):
-        logger.debug(f'Downloading file: {count}')
+        try:
+            logger.debug(f'Downloading file: {count}')
 
-        # Get response object for link
-        pdf_url: str = link.get('href')
-        
-        # Prepend base URL if needed
-        is_relative_url = 'https://' not in pdf_url
-        absolute_url = base_url + pdf_url if is_relative_url else pdf_url
+            # Get response object for link
+            pdf_url: str = link.get('href')
 
-        logger.debug(f'URL: {absolute_url}')
-        response = requests.get(absolute_url)
+            # Prepend base URL if needed
+            is_relative_url = 'https://' not in pdf_url
+            absolute_url = base_url + pdf_url if is_relative_url else pdf_url
 
-        # Get path for new pdf file
-        file_name_pdf = get_file_name_from_path_or_url(absolute_url)
-        path_pdf = os.path.join(dst_dir or '', file_name_pdf)
+            logger.debug(f'URL: {absolute_url}')
+            response = requests.get(absolute_url)
 
-        # Write content in pdf file
-        pdf = open(path_pdf, 'wb')
-        pdf.write(response.content)
-        pdf.close()
+            # Get path for new pdf file
+            file_name_pdf = get_file_name_from_path_or_url(absolute_url)
+            path_pdf = os.path.join(dst_dir or '', file_name_pdf)
 
-        logger.debug(f'File {count} downloaded -> {path_pdf}\n')
+            # Write content in pdf file
+            pdf = open(path_pdf, 'wb')
+            pdf.write(response.content)
+            pdf.close()
+
+            logger.debug(f'File {count} downloaded -> {path_pdf}\n')
+            success_count += 1
+        except Exception as e:
+            logger.warning(f'❗ Caught exception {e=} when trying to get download file {count} from {link}\n')
     
-    logger.info(f'✅ Finished the download of {len(pdf_links)} PDF file(s) in {get_abs_path(dst_dir)}\n')
+    logger.info(f'✅ Finished the download of {success_count} PDF file(s) in {get_abs_path(dst_dir)}\n')
