@@ -3,7 +3,7 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from pdfminer.high_level import extract_pages, extract_text
+from pdfminer.high_level import extract_text
 
 from logger import logger
 from helpers import (
@@ -30,8 +30,6 @@ def delete_all_pdf_or_txt_files_in_dir(dir: str) -> None:
 
 
 def create_txt_file_from_pdf(path_pdf: str) -> bool:
-    is_success = False
-
     try:
         text = extract_text(path_pdf)
         path_txt = path_pdf.replace('.pdf','.txt')
@@ -39,48 +37,44 @@ def create_txt_file_from_pdf(path_pdf: str) -> bool:
         output_file = open(path_txt, 'w')
         output_file.write(text)
         output_file.close()
-        is_success = True
+
         logger.debug(f'Created TXT file -> {path_txt}\n')
     except Exception as e:
         file_name = get_file_name_from_path_or_url(path_pdf)
+
         logger.warning(f'❗ Caught exception {e=} when trying to convert {file_name}\n')
+        return False
     
-    return is_success
+    return True
 
 
 def convert_all_pdfs_to_txt_in_dir(dir: str) -> None:
     logger.info(f'❥ Converting all PDF files to TXT files in {get_abs_path(dir)}\n')
 
-    corrupted: list[str] = []
-    success_count = 0
+    success_count = fail_count = 0
 
-    for file_name in get_files_in_dir(dir):
-        logger.debug(f'File -> {file_name}')
+    for count, file_name in enumerate(get_files_in_dir(dir)):
+        logger.debug(f'({count}) Converting {file_name} to TXT')
 
         path = os.path.join(dir, file_name)
 
-        if is_pdf(path) and not is_txt_file_present_for_pdf(path):
-            is_success = create_txt_file_from_pdf(path)
-
-            if is_success:
-                success_count += 1
-            else:
-                corrupted.append(file_name)
+        if not is_pdf(path):
+            logger.debug('Skipping because the file is not a PDF\n')
+        elif is_txt_file_present_for_pdf(path):
+            logger.debug('Skipping because a TXT file already exists for the PDF\n')
+        elif create_txt_file_from_pdf(path):
+            success_count += 1
         else:
-            logger.debug(
-                'Skipping because ' +
-                'the given file is not a PDF\n'
-                if not is_pdf(path) else
-                'a TXT file already exists for the given PDF\n')
+            fail_count +=1
 
-    if len(corrupted) > 0:
-        logger.info(f'❌ Failed the conversion of {len(corrupted)} PDF file(s) to TXT files')
+    if fail_count > 0:
+        logger.info(f'❌ Unsuccessfully converted {fail_count} PDF file(s) to TXT files')
 
-    logger.info(f'✅ Finished the conversion of {success_count} PDF file(s) to TXT files\n')
+    logger.info(f'✅ Successfully converted {success_count} PDF file(s) to TXT files\n')
 
 
 def download_all_pdfs_from_url(url: str, dst_dir: str) -> None:
-    logger.info(f'❥ Downloading all PDFs from {url}\n')
+    logger.info(f'❥ Downloading all PDFs from {url} in {get_abs_path(dst_dir)}\n')
 
     # Requests URL and get response object
     response = requests.get(url)
@@ -101,34 +95,48 @@ def download_all_pdfs_from_url(url: str, dst_dir: str) -> None:
     # Get all pdf links
     pdf_links = [link for link in links if '.pdf' in link.get('href', [])]
 
-    success_count = 0
+    success_count = fail_count = 0
 
     for count, link in enumerate(pdf_links):
         try:
-            logger.debug(f'Downloading file: {count}')
-
             # Get response object for link
             pdf_url: str = link.get('href')
+            logger.debug(f'({count}) Downloading PDF from {pdf_url}')
 
             # Prepend base URL if needed
             is_relative_url = 'https://' not in pdf_url
-            absolute_url = base_url + pdf_url if is_relative_url else pdf_url
-
-            logger.debug(f'URL: {absolute_url}')
-            response = requests.get(absolute_url)
+            if is_relative_url:
+                pdf_url = os.path.join(base_url, pdf_url)
+                logger.debug(f'Absolute URL: {pdf_url}')
 
             # Get path for new pdf file
-            file_name_pdf = get_file_name_from_path_or_url(absolute_url)
+            file_name_pdf = get_file_name_from_path_or_url(pdf_url)
             path_pdf = os.path.join(dst_dir or '', file_name_pdf)
+
+            # Skip if pdf already exists in destination
+            if os.path.isfile(path_pdf):
+                logger.debug(f'Skip as file already exists in {path_pdf}\n')
+                continue
+
+            response = requests.get(pdf_url)
+
+            if not response.ok:
+                logger.warning(f'❗ Skipping due to getting error code {response.status_code} for {pdf_url}\n')
+                fail_count += 1
+                continue
 
             # Write content in pdf file
             pdf = open(path_pdf, 'wb')
             pdf.write(response.content)
             pdf.close()
 
-            logger.debug(f'File {count} downloaded -> {path_pdf}\n')
+            logger.debug(f'File downloaded -> {path_pdf}\n')
             success_count += 1
         except Exception as e:
-            logger.warning(f'❗ Caught exception {e=} when trying to get download file {count} from {link}\n')
+            logger.warning(f'❗ Caught exception {e=} when trying to download file {count} from {link}\n')
+            fail_count += 1
     
-    logger.info(f'✅ Finished the download of {success_count} PDF file(s) in {get_abs_path(dst_dir)}\n')
+    if fail_count > 0:
+        logger.info(f'❌ Unsucessfully downloaded {fail_count} PDF file(s)')
+
+    logger.info(f'✅ Successfully downloaded {success_count} PDF file(s)\n')
