@@ -106,6 +106,7 @@ def download_all_pdfs_from_url(url: str, dst_dir: str) -> None:
             # Prepend base URL if needed
             is_relative_url = 'https://' not in pdf_url
             if is_relative_url:
+                pdf_url = pdf_url[1:] if pdf_url.startswith('/') else pdf_url
                 pdf_url = os.path.join(base_url, pdf_url)
                 logger.debug(f'Absolute URL: {pdf_url}')
 
