@@ -1,4 +1,3 @@
-import sys
 import argparse
 import logging
 
@@ -29,14 +28,7 @@ if __name__ == '__main__':
 
     if args.interactive:
         print('\nLet me ask you a few questions and I promise I will make you happy! (◕ ‿ ◕)')
-    elif not args.url:
-        if args.delete:
-            delete_all_pdf_or_txt_files_in_dir(args.dir)
-            sys.exit(0)
-        else:
-            print('\nYou must specify the first argument with either the -i flag to enter interactive mode or with a URL!\n(° ͜ʖ͡°)╭∩╮\n')
-            sys.exit(2)
-    
+
     # Example of URL -> 'https://www.nps.gov/articles/000/historic-preservation-fund-sample-grant-applications.htm'
     url = (
         input('\nWhat is the URL from which from which to download the PDF files?\n> ')
@@ -63,4 +55,5 @@ if __name__ == '__main__':
 
     if url:
         download_all_pdfs_from_url(url, dir)
-        convert_all_pdfs_to_txt_in_dir(dir)
+
+    convert_all_pdfs_to_txt_in_dir(dir)
